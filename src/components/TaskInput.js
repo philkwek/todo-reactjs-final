@@ -27,12 +27,21 @@ const TaskInput = (props) => {
             taskDescription: enteredTaskDetails,
             taskStatus: 0,
             taskPriority: 0,
-            userId: "testing"
+            userId: props.userId,
+            taskDate: "0000-00-00",
         };
 
-        $.post("https://us-central1-task-manager-api-4f9a8.cloudfunctions.net/tasks", taskData, function(result){
-            gotTaskId(result);
-        } )
+        //uploads task to correct db (private or public tasks)
+        if (props.privateStatus){ //if task is private
+            $.post("https://us-central1-task-manager-api-4f9a8.cloudfunctions.net/tasks/privateTasks/" + props.userId, 
+            taskData, function(result){
+                gotTaskId(result);
+            } )
+        } else { //if task is private
+            $.post("https://us-central1-task-manager-api-4f9a8.cloudfunctions.net/tasks", taskData, function(result){
+                gotTaskId(result);
+            } )
+        }
 
         const gotTaskId = (taskId) => {
             const uploadedData = {

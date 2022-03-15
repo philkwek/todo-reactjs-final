@@ -12,27 +12,29 @@ const TaskDisplay = (props) => {
         setAllTasks(originalData);
     },[originalData])
 
-    const TaskCheckHandler = (event) => {
-        props.onTaskChecked(event);
-    };
-
     const TaskDeleteHandler = (taskId) => {
         props.onTaskDelete(taskId);
-    };
-
-    const PriorityUpdateHandler = (data) => {
-        props.onPriorityUpdate(data);
     };
 
     const TaskFilterHandler = (tasks) => {
         setAllTasks(tasks);
     };
 
+    const DateUpdateHandler = (date) => {
+        props.onDateUpdate(date);
+    };
+
+    const PrivateTasksHandler = (data) => {
+        props.onPrivate(data);
+    }
+
     return (
         <div>
-            <TaskHeader onTaskFilter={TaskFilterHandler} tasks={originalData} />
+            <TaskHeader onTaskFilter={TaskFilterHandler} onPrivate={PrivateTasksHandler}
+             tasks={originalData} username={props.username}/>
             <div className="flex flex-row items-center mt-5">
-                <TaskList onTaskDelete={TaskDeleteHandler} onTaskChecked={TaskCheckHandler} onPriorityUpdate={PriorityUpdateHandler}
+                <TaskList username={props.username} taskPrivate={props.taskPrivate} userId={props.userId}
+                onTaskDelete={TaskDeleteHandler} onDateUpdate={DateUpdateHandler}
                 tasks={allTasks} />
             </div>
         </div>

@@ -12,6 +12,7 @@ const btnStates = [
 ]
 
 const TaskItem = (props) => {
+    const taskPrivate = props.taskPrivate;
     const firstRender = useRef(false);
 
     const [taskMenuState, setTaskMenuState] = useState('');
@@ -19,6 +20,12 @@ const TaskItem = (props) => {
     
     const [taskStatusNo, setTaskStatusNo] = useState(props.taskStatus);
     const [taskPriority, setTaskPriority] = useState(props.taskPriority);
+
+    let setDate = props.taskDate;
+    if (setDate == "0000-00-00"){
+        setDate = '';
+    }
+    const [taskDate, setTaskDate] = useState(setDate);
 
     const ChangeStatusHandler = () => {
         if (taskStatusNo == 0){
@@ -37,15 +44,30 @@ const TaskItem = (props) => {
 
     useEffect(() => {
         if (firstRender.current){
-            const taskCheckData = {
-                taskId: props.taskId,
-                taskDone: taskStatusNo
-            };
-            props.onTaskChecked(taskCheckData);
+            if (taskPrivate){
+                $.ajax({
+                    url:"https://us-central1-task-manager-api-4f9a8.cloudfunctions.net/tasks/privateTasks/"
+                    + props.userId + '/' + props.taskId,
+                    type:"PUT",
+                    data: {
+                    taskStatus: taskStatusNo
+                    },
+                    success: function () {console.log("Put success")}
+                });
+            } else {
+                $.ajax({
+                    url:"https://us-central1-task-manager-api-4f9a8.cloudfunctions.net/tasks/" + props.taskId,
+                    type:"PUT",
+                    data: {
+                    taskStatus: taskStatusNo
+                    },
+                    success: function () {console.log("Put success")}
+                });
+            }
         } else {
             firstRender.current = true;
         }
-    }, [props, taskStatusNo]);
+    }, [taskStatusNo]);
 
     const DeleteTaskHandler = () => { //deletes task from client by passing taskId to be deleted
         props.onTaskDelete(props.taskId);
@@ -55,9 +77,32 @@ const TaskItem = (props) => {
         setTaskPriority(event.target.value);
     };
 
-    useEffect(() => { //updates priority value
+    const DateSetHandler = (event) => {
+        setTaskDate(event.target.value);
+    };
 
-    },[taskPriority])
+    useEffect(()=> { //updates task date
+        if (taskPrivate){
+            $.ajax({
+                url:"https://us-central1-task-manager-api-4f9a8.cloudfunctions.net/tasks/privateTasks/"
+                + props.userId + '/' + props.taskId,
+                type:"PUT",
+                data: {
+                  taskDate: taskDate
+                },
+                success: function () {console.log("Put success")}
+            });
+        } else {
+            $.ajax({
+                url:"https://us-central1-task-manager-api-4f9a8.cloudfunctions.net/tasks/" + props.taskId,
+                type:"PUT",
+                data: {
+                  taskDate: taskDate
+                },
+                success: function () {console.log("Put success")}
+            });
+        }
+    },[taskDate]);
 
     const ToggleTaskMenu = () => { //toggles delete todo button
         if(taskMenuState === ''){
@@ -72,6 +117,7 @@ const TaskItem = (props) => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
+                        <input type="date" onChange={DateSetHandler} className="ml-3 border-0 text-xs"/>
                     </div>
                 </Fade>
             )
@@ -91,16 +137,24 @@ const TaskItem = (props) => {
             };
 
             //updates server
-            $.ajax({
-            url:
-                "https://us-central1-task-manager-api-4f9a8.cloudfunctions.net/tasks/" +
-                props.taskId,
-            type: "PUT",
-            data: newData,
-            success: function () {
-                console.log("Update success");
-            },
-            });
+            if (taskPrivate){
+                $.ajax({
+                    url:"https://us-central1-task-manager-api-4f9a8.cloudfunctions.net/tasks/privateTasks/"
+                    + props.userId + '/' + props.taskId,
+                    type: "PUT",
+                    data: newData,
+                    success: function () {
+                        console.log("Update success");
+                    },})
+            } else {
+                $.ajax({
+                    url:"https://us-central1-task-manager-api-4f9a8.cloudfunctions.net/tasks/" + props.taskId,
+                    type: "PUT",
+                    data: newData,
+                    success: function () {
+                        console.log("Update success");
+                    },})
+            }
 
             newData = {
             ...newData,
@@ -119,7 +173,7 @@ const TaskItem = (props) => {
                     {taskBtnState}
                 </button>
                 <div>
-                    <select className="priority-list appearance-none h-8 border-0 text-xs text-center" 
+                    <select className="priority-list ml-1 appearance-none h-8 border-0 text-xs text-center" 
                     defaultValue={taskPriority} onChange={TaskPriorityHandler} onBlur={TaskUpdateHandler}>
                         <option value="0">!</option>
                         <option value="1">!!</option>
@@ -129,6 +183,7 @@ const TaskItem = (props) => {
                 <div className="ml-3">
                     <p className="text-base font-medium">{props.taskName}</p>
                     <p className="text-xs text-gray-500">{props.taskDescription}</p>
+                    <p className="text-xs text-red-400">{taskDate}</p>
                 </div>
             </li>
         </Fade>

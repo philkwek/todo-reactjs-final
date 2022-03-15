@@ -1,6 +1,19 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 
 const TaskHeader = (props) => {
+    let originalUsername;
+
+    if (props.username == "" || props.username == undefined){
+        originalUsername = "My"
+    } else {
+        originalUsername = props.username + "'s";
+    }
+
+    const [username, setUsername] = useState(originalUsername);
+
+    useEffect(()=>{
+        setUsername(originalUsername);
+    },[originalUsername])
 
     const FilterListHandler = (event) => {
         let filter = event.target.value;
@@ -21,9 +34,29 @@ const TaskHeader = (props) => {
         props.onTaskFilter(filteredTasks);
     }
 
+    const SwitchTasks = () =>{
+        if (username == originalUsername){
+            setUsername('Private');
+        } else {
+            setUsername(originalUsername);
+        }
+    }
+
+    useEffect(()=>{
+        console.log(username);
+        //Switch to private tasks
+        if (username == "Private"){
+            props.onPrivate(true);
+        } else {
+            props.onPrivate(false);
+        }
+    },[username])
+
     return (
     <div className="flex flex-row items-center">
-        <h1 className="text-3xl font-bold font-sans">My Tasks</h1>
+        <h1 onClick={SwitchTasks}
+        className="text-2xl font-bold font-sans select-none cursor-pointer hover:text-blue-600 duration-300">
+            {username} Tasks</h1>
         <select className="ml-5 border-0" onChange={FilterListHandler}>
             <option value="-1">Filter list by</option>
             <option value="2" >Done</option>
