@@ -3,76 +3,93 @@ import $ from 'jquery';
 import './index.css';
 import TaskDisplay from './components/TaskDisplay.js'
 import TaskInput from './components/TaskInput.js';
+import TaskHeader from './components/TaskHeader.js';
 
 const testData = [
   {
-      "id": "4cvQmibYdm1mN8A4uifT",
-      "taskName": "Plan Event",
+      "id": "7VmNV41JNwdEOMI7gAbj",
+      "taskStatus": "1",
+      "userId": "testing",
       "taskDescription": "",
-      "taskStatus": "true",
-      "userId": "HYOePPQ2ZVo1P0G7lch0"
+      "taskPriority": 2,
+      "taskName": "Hello again"
   },
   {
-      "id": "SogFb3AqceHpC75jXhS2",
-      "taskDescription": "get milk, eggs, flour and sugar for baking",
-      "userId": "otherId",
-      "taskName": "Get Groceries",
-      "taskStatus": "false"
-  },
-  {
-      "id": "mp0blgkCxnpKS3zXYQUr",
-      "taskName": "Read Bible",
-      "taskDescription": "Matthew 5",
+      "id": "I1vHSi6lsGT15nfkLdgk",
+      "taskDescription": "",
       "userId": "testing",
-      "taskStatus": "false"
+      "taskStatus": "0",
+      "taskName": "Buy Milk!",
+      "taskPriority": "0"
   },
   {
-      "id": "pYEe0XRKgOIvAZbQAqP7",
-      "taskName": "Finish Coding Project",
-      "taskStatus": "false",
-      "userId": "HYOePPQ2ZVo1P0G7lch0",
+      "id": "kwMc922hZ1YvxsAYK93R",
+      "taskStatus": "2",
+      "taskName": "Hello!",
+      "taskPriority": 0,
+      "userId": "testing",
       "taskDescription": ""
-  },
-  {
-      "id": "y16JDui5yWMmJXvhTTmU",
-      "userId": "testing",
-      "taskStatus": "false",
-      "taskName": "Testing",
-      "taskDescription": "Testing123"
   }
-]
+];
 
 function App() {
   const [newTask, setNewTask] = useState('');
   const [allTasks, setAllTasks] = useState('');
 
-  //Uncomment when uploading to site
-  if (allTasks === ''){
+  if (allTasks === ''){ //gets tasks from site
     $.get("https://us-central1-task-manager-api-4f9a8.cloudfunctions.net/tasks", function(data, status){
-      const tasks = JSON.parse(data);
-      setAllTasks(tasks);
-      console.log('Fetched Data');
+      let taskData = JSON.parse(data);
+
+      const sortedData = SortTasks(taskData);
+
+      setAllTasks(sortedData);
     });
   };
 
-  const closeTaskHandler = () => {
+  const SortTasks = (tasks) => {
+    tasks.sort(function(a, b){ //sorts list by order of priority
+      return b.taskPriority - a.taskPriority;
+    });
+
+    tasks.sort(function(a,b){ //sorts list by order of status
+      if (a.taskStatus==2){
+        return -1
+      } else {
+        return 0
+      }
+    });
+
+    tasks.sort(function(a, b){ //sorts list by order of priority
+      if (a.taskStatus==2){
+        return b.taskPriority - a.taskPriority;
+      } else {
+        return 0;
+      }
+    });
+
+    return tasks;
+  }
+
+  const CloseTaskHandler = () => {
     setNewTask();
   }
 
-  const saveTaskHandler = (event) => {
+  const SaveTaskHandler = (event) => {
     const taskData = event;
     //save to cloud
     setAllTasks((prevState) => {
       return [...prevState, taskData]
     });
-    closeTaskHandler();
+
+    CloseTaskHandler();
   };
 
-  const newTaskHandler = () => {
-    setNewTask(<TaskInput closeNewTask={closeTaskHandler} onSaveTask={saveTaskHandler}/>)
+  const NewTaskHandler = () => {
+    setNewTask(<TaskInput closeNewTask={CloseTaskHandler} onSaveTask={SaveTaskHandler}/>)
   };
 
-  const taskCheckedHandler = (event) => { //updates task status
+  const TaskCheckedHandler = (event) => { //updates task status
+    //updates server
     $.ajax({
       url:"https://us-central1-task-manager-api-4f9a8.cloudfunctions.net/tasks/" + event.taskId,
       type:"PUT",
@@ -83,7 +100,7 @@ function App() {
     });
   };
 
-  const taskDeleteHandler = (taskId) => {
+  const TaskDeleteHandler = (taskId) => {
     //delete task from client
     const newData = allTasks.filter(function(task){
       return task.id != taskId;
@@ -100,17 +117,25 @@ function App() {
     });
   }
 
-  return (
-    <div className="grid grid-cols-1 gap-4 m-5 justify-center">
-      <div><h1 className="text-3xl font-bold font-sans">My Tasks</h1></div>
-      <TaskDisplay tasks={allTasks} onTaskDelete={taskDeleteHandler} onTaskChecked={taskCheckedHandler}></TaskDisplay>
-      {newTask}
+  const PriorityUpdateHandler = (data) => { //gives data of task and it's new priority
+  };
 
-      <div className="fixed right-5 bottom-5">
-        <button 
-        onClick={newTaskHandler}
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full">+
-        </button>
+  return (
+    <div className="flex flex-col place-content-center">
+      <div className="w-full h-full sm:w-9/10 sm:h-4/5 md:h-4/6 md:w-3/6 lg:w-2/6 lg:h-3/6 m-auto rounded-lg relative border-0 shadow-md p-5">
+        <div className="grid grid-cols-1 gap-5">
+          <TaskDisplay tasks={allTasks} 
+          onTaskDelete={TaskDeleteHandler} onTaskChecked={TaskCheckedHandler} onPriorityUpdate={PriorityUpdateHandler}> 
+          </TaskDisplay>
+          {newTask}
+        </div>
+        <div className="absolute bottom-2 right-2">
+            <button 
+            onClick={NewTaskHandler}
+            className="text-white font-bold py-2 px-4 rounded-full m-3
+            transition ease-in-out delay-150 bg-black hover:scale-110 hover:bg-blue-500 duration-300">+
+            </button>
+        </div>
       </div>
     </div>
   );
